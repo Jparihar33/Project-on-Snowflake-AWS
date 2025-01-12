@@ -1,0 +1,42 @@
+CREATE OR REPLACE STORAGE INTEGRATION aws_s3_integration
+  TYPE = EXTERNAL_STAGE
+  ENABLED =  TRUE 
+  STORAGE_ALLOWED_LOCATIONS = ('s3://bucketsnowflakedata/demo120125/')
+  STORAGE_PROVIDER = 'S3'
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::3814915:role/SnowFlake_S3_int_Role'
+
+  show integrations 
+
+  DESC integration aws_s3_integration
+
+grant usage on integration aws_s3_integration to role accountadmin;
+
+CREATE  OR REPLACE  FILE FORMAT CSV_One
+TYPE =  'CSV'
+Field_delimiter=',' 
+skip_header=1
+
+CREATE OR REPLACE STAGE aws_s3_stage
+    URL='s3://bucketsnowflakedata/demo120125/'
+    STORAGE_INTEGRATION = aws_s3_integration
+    FILE_FORMAT = ( FORMAT_NAME = 'CSV_One')
+
+    list@aws_s3_stage
+
+    create table orderdetails(
+    ORDER_ID varchar,	
+    AMOUNT integer,
+    PROFIT	integer,
+    QUANTITY integer,	
+    CATEGORY varchar,
+    SUBCATEGORY varchar);
+
+    drop table orderdetails
+
+    select * from orderdetails
+
+    copy into orderdetails
+    from @aws_s3_stage/OrderDetails
+    force=true;
+
+    select count(*) from orderdetails
